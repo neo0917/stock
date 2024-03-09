@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>殖利率計算</title>
+    <style>
+        body {
+            background-color: #414141;
+            font-family: 'Arial', sans-serif;
+            color: #555;
+        }
+
+        #calculator {
+            background-color: #c0c0c0;
+            border-radius: 20px;
+            margin: 100px auto;
+            padding: 40px;
+            border: 1px solid #ffffff;
+            width: 320px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+
+        button {
+            background-color: #5e77b2;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 20px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.2s;
+        }
+
+        button:hover {
+            background-color: #000000;
+        }
+
+        #results {
+            margin-top: 30px;
+        }
+
+        .result-item {
+            font-size: 16px;
+            margin: 10px 0;
+        }
+
+        .bold {
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div id="calculator">
+        股價: <input type="text" id="price" value="" placeholder="輸入個股股價"><br>
+        現金股利: <input type="text" id="cashDividend" value="" placeholder="輸入配發金額"><br>
+        股票股利: <input type="text" id="stockDividend" value="" placeholder="輸入配發股票"><br>
+        一年配幾次股息: <input type="text" id="dividendFrequency" value="" placeholder="輸入每年配息次數"><br>
+        <button onclick="calculate()">開始計算</button><br>
+
+        <div id="results">
+            <div class="result-item">除權息後股價試算: <span id="trialPrice" class="bold">0</span>元</div>
+            <div class="result-item">殖利率試算結果: <span id="yield" class="bold">0</span>%</div>
+            <div class="result-item">年化報酬率: <span id="annualReturn" class="bold">0</span>%</div>
+        </div>
+    </div>
+
+    <script>
+        function calculate() {
+            var price = parseFloat(document.getElementById('price').value); // 除權除息前一日收盤價（股價）
+            var cashDividend = parseFloat(document.getElementById('cashDividend').value); // 現金股利
+            var stockDividend = parseFloat(document.getElementById('stockDividend').value); // 股票股利
+            var dividendFrequency = parseFloat(document.getElementById('dividendFrequency').value); // 每年配息次數
+
+            if (price === 0 || isNaN(price) || isNaN(cashDividend) || isNaN(stockDividend) || isNaN(dividendFrequency)) {
+                alert('請輸入有效數字');
+                return;
+            }
+
+            // 1. 計算除權息參考價
+            var postExRightsPrice = (price - cashDividend) / (1 + stockDividend / 10);
+
+            // 2. 計算股票股利的價值
+            var stockDividendValue = (stockDividend / 10) * postExRightsPrice;
+
+            // 3. 使用除權息參考價和現金股利計算還原殖利率（殖利率）
+            var totalYield = (cashDividend + stockDividendValue) / price * 100;
+
+            // 4. 計算年化報酬率
+            var annualReturn = totalYield * dividendFrequency;
+
+            // 更新顯示
+            document.getElementById('yield').innerText = totalYield.toFixed(2);
+            document.getElementById('trialPrice').innerText = postExRightsPrice.toFixed(2);
+            document.getElementById('annualReturn').innerText = annualReturn.toFixed(2);
+        }
+    </script>
+</body>
+</html>
