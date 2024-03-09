@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>股票質押試算</title>
+    <style>
+        body {
+            background-color: #414141;
+            font-family: 'Arial', sans-serif;
+            color: #555;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+
+        #calculator {
+            background-color: #c0c0c0;
+            border-radius: 20px;
+            margin: 100px auto;
+            padding: 40px;
+            border: 1px solid #ffffff;
+            width: 320px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+
+        button {
+            background-color: #5e77b2;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 20px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.2s;
+        }
+
+        button:hover {
+            background-color: #000000;
+        }
+
+        #results {
+            margin-top: 30px;
+        }
+
+        .result-item {
+            font-size: 16px;
+            margin: 10px 0;
+        }
+
+        .bold {
+            font-weight: bold;
+        }
+
+        
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+<div id="calculator">
+    <h2>股票質押試算</h2>
+    <label for="unitPrice">單價：</label>
+    <input type="text" id="unitPrice" placeholder="輸入單價">
+
+    <label for="holdingQuantity">持有張數：</label>
+    <input type="text" id="holdingQuantity" placeholder="輸入持有張數">
+
+    <label for="loanRatio">質押成數（%）：</label>
+    <input type="text" id="loanRatio" placeholder="輸入質押成數">
+
+    <label for="dividend">股息：</label>
+    <input type="text" id="dividend" placeholder="輸入股息">
+
+    <label for="dividendFrequency">每年配息次數：</label>
+    <input type="text" id="dividendFrequency" placeholder="輸入每年配息次數">
+
+    <label for="annualInterestRate">年利率（%）：</label>
+    <input type="text" id="annualInterestRate" placeholder="輸入年利率">
+
+    <button onclick="calculate()">開始計算</button>
+
+    <div id="results">
+        <p>持有成本：<span id="holdingCost">0</span>元</p>
+        <p>維持率：<span id="maintenanceRatio">0</span>%</p>
+        <p>原年配息：<span id="annualDividend">0</span>元</p>
+        <p>貸款金額：<span id="loanAmount">0</span>元</p>
+        <p>年利息：<span id="annualInterest">0</span>元</p>
+        <p>質押再投入後維持率：<span id="maintenanceRatioAfterPledge"  style="color: #FF0000;">0</span>%</p>
+        <p>質押再投入總張數：<span id="totalSharesAfterPledge" style="color: #FF0000;">0</span></p>
+        <p>質押再投入年配息：<span id="annualDividendAfterPledge" style="color: #FF0000;">0</span>元</p>
+        <p>質押再投入利差：<span id="interestDifference" style="color: #FF0000;">0</span>元</p>
+    </div>
+
+    <canvas id="myChart" width="300" height="200"></canvas>
+</div>
+
+<script>
+    var myChart; // 在全局作用域中定義圖表實例變量
+
+    
+    function calculate() {
+        var unitPrice = parseFloat(document.getElementById('unitPrice').value);
+        var holdingQuantity = parseFloat(document.getElementById('holdingQuantity').value);
+        var loanRatio = parseFloat(document.getElementById('loanRatio').value);
+        var dividend = parseFloat(document.getElementById('dividend').value);
+        var dividendFrequency = parseFloat(document.getElementById('dividendFrequency').value);
+        var annualInterestRate = parseFloat(document.getElementById('annualInterestRate').value);
+
+        if (isNaN(unitPrice) || isNaN(holdingQuantity) || isNaN(loanRatio) || isNaN(dividend) || isNaN(dividendFrequency) || isNaN(annualInterestRate)) {
+            alert('請輸入有效數字');
+            return;
+        }
+
+        var holdingCost = Math.round(unitPrice * holdingQuantity * 1000);
+        var maintenanceRatio = holdingCost / (holdingCost * (loanRatio / 100)) * 100;
+        var annualDividend = Math.round(dividend * dividendFrequency * holdingQuantity * 1000);
+        var loanAmount = Math.round(holdingCost * (loanRatio / 100));
+        var annualInterest = Math.round(loanAmount * (annualInterestRate * 0.01));
+        var maintenanceRatioAfterPledge = (holdingCost + loanAmount) / loanAmount * 100;
+
+        var totalSharesAfterPledge = Math.round(loanAmount / (unitPrice * 1000) + holdingQuantity);
+        var annualDividendAfterPledge = Math.round(totalSharesAfterPledge * dividend * 1000 * dividendFrequency);
+        var interestDifference = Math.round(annualDividendAfterPledge - annualDividend - annualInterest);
+
+        document.getElementById('holdingCost').innerText = holdingCost;
+        document.getElementById('maintenanceRatio').innerText = maintenanceRatio.toFixed(2);
+        document.getElementById('annualDividend').innerText = annualDividend;
+        document.getElementById('loanAmount').innerText = loanAmount;
+        document.getElementById('annualInterest').innerText = annualInterest;
+        document.getElementById('maintenanceRatioAfterPledge').innerText = maintenanceRatioAfterPledge.toFixed(2);
+        document.getElementById('totalSharesAfterPledge').innerText = totalSharesAfterPledge;
+        document.getElementById('annualDividendAfterPledge').innerText = annualDividendAfterPledge;
+        document.getElementById('interestDifference').innerText = interestDifference;
+
+        
+
+        if (myChart) {
+            myChart.data.datasets[0].data = [annualDividend, annualDividendAfterPledge];
+            myChart.update();
+        } else {
+            var ctx = document.getElementById('myChart').getContext('2d');
+            myChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['原年配息', '質押再投入年配息'],
+                    datasets: [{
+                        label: '配息比較',
+                        data: [annualDividend, annualDividendAfterPledge],
+                        backgroundColor: [
+                            'rgba(75, 192, 192, 0.2)',
+                            'rgba(255, 99, 132, 0.2)',
+                        ],
+                        borderColor: [
+                            'rgba(75, 192, 192, 1)',
+                            'rgba(255, 99, 132, 1)',
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+    }
+</script>
+
+</body>
+</html>
